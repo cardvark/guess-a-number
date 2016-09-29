@@ -12,14 +12,19 @@ var ViewModel = function() {
     self.attemptsInput = ko.observable();
     self.maxInput = ko.observable();
     self.minInput = ko.observable();
-    self.user_name = ko.obserable();
+    self.existingUserInput = ko.observable();
     self.createGameFeedback = ko.observable();
 
-    self.errorResponse = function( errMsg ) {
+    // Game Move input and response values
+    self.gameKeyInput = ko.observable();
+    self.guessInput = ko.observable();
+    self.makeMoveFeedback = ko.observable();
+
+    self.errorResponse = function( error ) {
         var outMessage = '';
         outMessage += 'Error!';
         outMessage += '<br><br>';
-        outMessage += errMsg;
+        outMessage += error.message || '';
 
         return outMessage;
     };
@@ -34,8 +39,8 @@ var ViewModel = function() {
             user_name: user_name
         }).execute(function (response) {
             if (response.error) {
-                var errorMessage = response.error.message || '';
-                feedback += self.errorResponse( errorMessage );
+                // var errorMessage = response.error.message || '';
+                feedback += self.errorResponse( response.error );
             } else {
                 feedback += 'User created!';
                 feedback += '<br>Name: ' + user_name;
@@ -49,6 +54,60 @@ var ViewModel = function() {
 
     self.createNewGame = function() {
         // var attempts = self.
+        var attempts = self.attemptsInput();
+        var max = self.maxInput();
+        var min = self.minInput();
+        var name = self.existingUserInput();
+        var feedback = '';
+
+        gapi.client.guess_a_number.new_game({
+            attempts: attempts,
+            max: max,
+            min: min,
+            user_name: name
+        }).execute(function (response) {
+            if (response.error) {
+                feedback += self.errorResponse( response.error );
+            } else {
+                self.attemptsInput('');
+                self.maxInput('');
+                self.minInput('');
+                self.existingUserInput('');
+                self.createGameFeedback('');
+
+                feedback += 'New game created!';
+                feedback += '<br>Game ID:';
+                feedback += '<br>' + response.urlsafe_key;
+                feedback += '<br><br>Use this ID to submit game moves.';
+                feedback += '<br>Good luck!';
+            }
+            self.createGameFeedback( feedback );
+        });
+    };
+
+    self.makeMove = function() {
+        var game_key = self.gameKeyInput();
+        var guess = self.guessInput();
+        var feedback = '';
+
+        gapi.client.guess_a_number.make_move({
+            urlsafe_game_key: game_key,
+            guess: guess
+        }).execute(function (response) {
+            if (response.error) {
+                feedback += self.errorResponse( response.error );
+            } else {
+                // self.gameKeyInput('');
+                self.guessInput('');
+
+                feedback += 'Your guess: ' + guess;
+                feedback += '<br>Response: ' + response.message;
+                feedback += '<br><br>Attempts remaining: ' + response.attempts_remaining;
+                feedback += '<br><br>';
+                // feedback += response.game_over ? 'Game Over!' : '';
+            }
+            self.makeMoveFeedback( feedback );
+        });
     };
 
 };
