@@ -9,6 +9,9 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
+- url: /js
+  static_dir: js
+
 - url: /_ah/spi/.*
   script: api.api
 
@@ -17,6 +20,10 @@ handlers:
 
 - url: /crons/send_reminder
   script: main.app
+
+- url: /
+  static_files: index.html
+  upload: index\.html
 
 libraries:
 - name: webapp2
